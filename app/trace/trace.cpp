@@ -68,6 +68,13 @@ extern "C" {
 	{
 		assert(false);
 	}
+
+	uint64_t
+	spdk_get_ticks_hz(void)
+	{
+		assert(false);
+		return 0;
+	}
 } /* extern "C" */
 
 static void usage(void);
@@ -275,6 +282,9 @@ print_event_json(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint6
 static void
 process_event(struct spdk_trace_parser_entry *e, uint64_t tsc_rate, uint64_t tsc_offset)
 {
+	if (tsc_rate == 0) {
+		tsc_rate = spdk_get_ticks_hz();
+	}
 	if (g_json == NULL) {
 		print_event(e, tsc_rate, tsc_offset);
 	} else {

@@ -36,7 +36,7 @@ include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
 APP = spdk_trace
-SPDK_NO_LINK_ENV = 1
+SPDK_NO_LINK_ENV = 0
 
 SPDK_LIB_LIST += json trace_parser
 
