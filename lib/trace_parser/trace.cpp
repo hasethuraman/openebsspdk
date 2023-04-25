@@ -289,7 +289,7 @@ spdk_trace_parser::populate_events(spdk_trace_history *history, int num_entries)
 		_tsc_offset = e[first].tsc;
 	}
 
-	printf("_tsc_offset: %d\n", _tsc_offset);
+	printf("_tsc_offset: %ld\n", _tsc_offset);
 
 	i = first;
 	while (1) {
