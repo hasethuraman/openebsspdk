@@ -447,7 +447,6 @@ int main(int argc, char **argv)
 	g_flags = spdk_trace_parser_get_flags(g_parser);
 	if (!g_json) {
 		printf("TSC Rate: %ju\n", g_flags->tsc_rate);
-		printf("TSC Rate (overwritten): %ju\n", spdk_get_ticks_hz());
 	} else {
 		spdk_json_write_object_begin(g_json);
 		print_tpoint_definitions();
