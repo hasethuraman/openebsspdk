@@ -274,7 +274,7 @@ spdk_trace_parser::populate_events(spdk_trace_history *history, int num_entries)
 			}
 		}
 	} else {
-		println("else");
+		printf("else\n");
 		first = 0;
 		last = num_entries_filled - 1;
 	}
