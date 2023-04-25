@@ -37,6 +37,7 @@
 #include "spdk/likely.h"
 #include "spdk/string.h"
 #include "spdk/util.h"
+#include "ctype.h"
 #include <sys/sysinfo.h>
 #include <stdio.h>
 #include <errno.h>
@@ -475,14 +476,30 @@ int main(int argc, char **argv)
 		}
 	}
 
-    struct sysinfo s_info;
-    int error = sysinfo(&s_info);
-    if(error != 0)
-    {
-        printf("code error = %d\n", error);
-		exit(error);
+    char *line = NULL;
+	char *delim = " ";
+    size_t len = 0;
+    ssize_t read;
+	long uptime = 0;
+
+    FILE *fp = fopen("/proc/stat", "r");
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
+    while ((read = getline(&line, &len, fp)) != -1) {
+		if (strstr(line, "btime") != NULL) {
+			char * token = strtok(line, delim);
+			while(token != NULL) {
+				token = strtok(NULL,delim);
+				if(isdigit(*token)) {
+					uptime = atoi(token);
+					break;
+				}
+			}
+		}
     }
-	long uptime = s_info.uptime;
+    fclose(fp);
+    if (line)
+        free(line);
 
 	tsc_offset = spdk_trace_parser_get_tsc_offset(g_parser);
 	printf("spdk_trace_parser_get_tsc_offset tsc_offset : %ld", tsc_offset);
