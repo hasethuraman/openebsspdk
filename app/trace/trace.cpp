@@ -37,6 +37,12 @@
 #include "spdk/likely.h"
 #include "spdk/string.h"
 #include "spdk/util.h"
+#include <sys/sysinfo.h>
+#include <stdio.h>
+#include <errno.h>
+#include <linux/unistd.h>       /* for _syscallX macros/related stuff */
+#include <linux/kernel.h>       /* for struct sysinfo */
+#include <time.h>
 
 #include <map>
 
@@ -147,7 +153,7 @@ print_float(const char *arg_string, float arg)
 }
 
 static void
-print_event(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t tsc_offset)
+print_event(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t tsc_offset, long uptime)
 {
 	struct spdk_trace_entry		*e = entry->entry;
 	const struct spdk_trace_tpoint	*d;
@@ -159,7 +165,13 @@ print_event(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t t
 
 	printf("%2d: %10.3f ", entry->lcore, us);
 	if (g_print_tsc) {
-		printf("(%9ju) ", e->tsc - tsc_offset);
+		time_t usb = uptime + get_us_from_tsc(e->tsc, tsc_rate);
+		struct tm  ts;
+		ts = *localtime(&usb);
+		char       buf[80];
+		strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+		// printf("(%9ju) ", e->tsc - tsc_offset);
+		printf("(%s) ", buf);
 	}
 	if (g_flags->owner[d->owner_type].id_prefix) {
 		printf("%c%02d ", g_flags->owner[d->owner_type].id_prefix, e->poller_id);
@@ -201,7 +213,7 @@ print_event(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t t
 }
 
 static void
-print_event_json(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t tsc_offset)
+print_event_json(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t tsc_offset, long uptime)
 {
 	struct spdk_trace_entry *e = entry->entry;
 	const struct spdk_trace_tpoint *d;
@@ -273,12 +285,12 @@ print_event_json(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint6
 }
 
 static void
-process_event(struct spdk_trace_parser_entry *e, uint64_t tsc_rate, uint64_t tsc_offset)
+process_event(struct spdk_trace_parser_entry *e, uint64_t tsc_rate, uint64_t tsc_offset, long uptime)
 {
 	if (g_json == NULL) {
-		print_event(e, tsc_rate, tsc_offset);
+		print_event(e, tsc_rate, tsc_offset, uptime);
 	} else {
-		print_event_json(e, tsc_rate, tsc_offset);
+		print_event_json(e, tsc_rate, tsc_offset, uptime);
 	}
 }
 
@@ -462,13 +474,22 @@ int main(int argc, char **argv)
 		}
 	}
 
+    struct sysinfo s_info;
+    int error = sysinfo(&s_info);
+    if(error != 0)
+    {
+        printf("code error = %d\n", error);
+		exit(error);
+    }
+	long uptime = s_info.uptime;
+
 	tsc_offset = spdk_trace_parser_get_tsc_offset(g_parser);
 	printf("spdk_trace_parser_get_tsc_offset tsc_offset : %ld", tsc_offset);
 	while (spdk_trace_parser_next_entry(g_parser, &entry)) {
 		if (entry.entry->tsc < tsc_offset) {
 			continue;
 		}
-		process_event(&entry, g_flags->tsc_rate, tsc_offset);
+		process_event(&entry, g_flags->tsc_rate, tsc_offset, uptime);
 	}
 
 	if (g_json != NULL) {
