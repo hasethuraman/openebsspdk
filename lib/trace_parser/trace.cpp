@@ -256,9 +256,12 @@ spdk_trace_parser::populate_events(spdk_trace_history *history, int num_entries)
 	e = history->entries;
 
 	num_entries_filled = num_entries;
+	printf("num_entries_filled: %d\n", num_entries_filled);
+	printf("num_entries: %d\n", num_entries);
 	while (e[num_entries_filled - 1].tsc == 0) {
 		num_entries_filled--;
 	}
+	printf("num_entries_filled: %d\n", num_entries_filled);
 
 	if (num_entries == num_entries_filled) {
 		first = last = 0;
@@ -271,6 +274,7 @@ spdk_trace_parser::populate_events(spdk_trace_history *history, int num_entries)
 			}
 		}
 	} else {
+		println("else");
 		first = 0;
 		last = num_entries_filled - 1;
 	}
@@ -284,6 +288,8 @@ spdk_trace_parser::populate_events(spdk_trace_history *history, int num_entries)
 	if (e[first].tsc > _tsc_offset) {
 		_tsc_offset = e[first].tsc;
 	}
+
+	printf("_tsc_offset: %d\n", _tsc_offset);
 
 	i = first;
 	while (1) {
