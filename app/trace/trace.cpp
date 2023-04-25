@@ -166,6 +166,7 @@ print_event(struct spdk_trace_parser_entry *entry, uint64_t tsc_rate, uint64_t t
 	printf("%2d: %10.3f ", entry->lcore, us);
 	if (g_print_tsc) {
 		time_t usb = uptime + (get_us_from_tsc(e->tsc, tsc_rate) / (1000 * 1000));
+		printf("[%ld:%ld] ", uptime,usb);
 		struct tm  ts;
 		ts = *localtime(&usb);
 		char       buf[80];
