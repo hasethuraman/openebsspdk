@@ -467,6 +467,7 @@ int main(int argc, char **argv)
 	}
 
 	tsc_offset = spdk_trace_parser_get_tsc_offset(g_parser);
+	printf("spdk_trace_parser_get_tsc_offset tsc_offset : %d", tsc_offset);
 	while (spdk_trace_parser_next_entry(g_parser, &entry)) {
 		if (entry.entry->tsc < tsc_offset) {
 			continue;
