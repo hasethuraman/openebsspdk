@@ -694,11 +694,11 @@ nvmf_subsystem_state_change(struct spdk_nvmf_subsystem *subsystem,
 	enum spdk_nvmf_subsystem_state intermediate_state;
 	int rc;
 
-	SPDK_INFOLOG(nvmf, "Existing changing state %b\n", subsystem->changing_state);
+	SPDK_INFOLOG(nvmf, "Existing changing state %d\n", subsystem->changing_state);
 	if (__sync_val_compare_and_swap(&subsystem->changing_state, false, true)) {
 		return -EBUSY;
 	}
-	SPDK_INFOLOG(nvmf, "Current changing state %b\n", subsystem->changing_state);
+	SPDK_INFOLOG(nvmf, "Current changing state %d\n", subsystem->changing_state);
 
 	SPDK_DTRACE_PROBE3(nvmf_subsystem_change_state, subsystem->subnqn,
 			   requested_state, subsystem->state);
