@@ -694,34 +694,45 @@ nvmf_subsystem_state_change(struct spdk_nvmf_subsystem *subsystem,
 	enum spdk_nvmf_subsystem_state intermediate_state;
 	int rc;
 
+	SPDK_INFOLOG(nvmf, "Existing changing state %b\n", subsystem->changing_state);
 	if (__sync_val_compare_and_swap(&subsystem->changing_state, false, true)) {
 		return -EBUSY;
 	}
+	SPDK_INFOLOG(nvmf, "Current changing state %b\n", subsystem->changing_state);
 
 	SPDK_DTRACE_PROBE3(nvmf_subsystem_change_state, subsystem->subnqn,
 			   requested_state, subsystem->state);
+	SPDK_INFOLOG(nvmf, "Current subsystem state %d and requested state %d\n", subsystem->state, requested_state);
 	/* If we are already in the requested state, just call the callback immediately. */
 	if (subsystem->state == requested_state) {
 		subsystem->changing_state = false;
+		SPDK_INFOLOG(nvmf, "Changing state done\n");
 		if (cb_fn) {
+			SPDK_INFOLOG(nvmf, "Calling cb_fn\n");
 			cb_fn(subsystem, cb_arg, 0);
+			SPDK_INFOLOG(nvmf, "Done calling cb_fn\n");
 		}
 		return 0;
 	}
 
+	SPDK_INFOLOG(nvmf, "Again Current subsystem state %d and requested state %d\n", subsystem->state, requested_state);
 	intermediate_state = nvmf_subsystem_get_intermediate_state(subsystem->state, requested_state);
+	SPDK_INFOLOG(nvmf, "Intermediate subsystem state %d\n", intermediate_state);
 	assert(intermediate_state != SPDK_NVMF_SUBSYSTEM_NUM_STATES);
 
 	ctx = calloc(1, sizeof(*ctx));
 	if (!ctx) {
+		SPDK_INFOLOG(nvmf, "Changing state done from calloc\n");
 		subsystem->changing_state = false;
 		return -ENOMEM;
 	}
 
 	ctx->original_state = subsystem->state;
 	rc = nvmf_subsystem_set_state(subsystem, intermediate_state);
+	SPDK_INFOLOG(nvmf, "Subsystem set state: %d\n", rc);
 	if (rc) {
 		free(ctx);
+		SPDK_INFOLOG(nvmf, "Changing state done from nvmf_subsystem_set_state\n");
 		subsystem->changing_state = false;
 		return rc;
 	}
@@ -732,10 +743,12 @@ nvmf_subsystem_state_change(struct spdk_nvmf_subsystem *subsystem,
 	ctx->cb_fn = cb_fn;
 	ctx->cb_arg = cb_arg;
 
+	SPDK_INFOLOG(nvmf, "Calling spdk_for_each_channel\n");
 	spdk_for_each_channel(subsystem->tgt,
 			      subsystem_state_change_on_pg,
 			      ctx,
 			      subsystem_state_change_done);
+	SPDK_INFOLOG(nvmf, "Done calling spdk_for_each_channel\n");
 
 	return 0;
 }
